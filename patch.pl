@@ -18,7 +18,7 @@ foreach my $line (@lines) {
     $indent_count = length($1);
     last;
   }
-  elsif( $line =~ /^( +)/) {
+  if( $line =~ /^( +)/) {
     $indent_type = " ";
     $indent_count = length($1);
     last;
@@ -36,9 +36,6 @@ sub get_indent_count {
   return 0;
 }
 
-# print("ident type: $indent_type\n");
-# print("ident width: $indent_count\n");
-
 my $line_cnt = scalar(@lines);
 
 my $lastIc = 0;
@@ -49,22 +46,29 @@ for (my $i = 0; $i < $line_cnt; $i++) {
     print("\n");
     next;
   }
+  if ($line =~ /^\s+#/ or $line =~ /^\s*match .+:/ or $line =~ /^\s+return/) {
+    print("$line\n");
+    next;
+  }
   my $ic = get_indent_count($line);
-  my $i = $indent_type x $indent_count x $ic;
+  if ($line =~ /^\s*.+:/ and not $line =~ /".*:.*"/ and not $line =~ /:(\s*[a-zA-Z0-9]*)=/ and not $line =~ /var.*:/) {
+    # something:#ignore
+    $ic++;
+  }
+  my $in = $indent_type x $indent_count x $ic;
   print("$line\n");
-  if ($ic gt 0) {
-    # TODO handle control structure
-    print("$i");
-    if ($ic eq $lastIc) {
-      print("insert on same level");
-    } elsif ($ic gt $lastIc) {
-      print("insert on deeper level");
-    } elsif ($ic lt $lastIc) {
-      print("insert on higher level")
-    } else {
-      print("insert nothing");
-    }
-    print(" || $lastIc -> $ic\n");
+  if ($ic eq 0) {
+    next
+  }
+  my $ins = 0;
+  if ($ic eq $lastIc or $ic gt $lastIc or $ic lt $lastIc) {
+    $ins = 1;
+  } else {
+    $ins = 0;
+  }
+  if ($ins eq 1) {
+    my $t = $i + 1;
+    print("$in# NaiveGBScriptProfiler(\"$file\", $t, OS.get_ticks_msec(), \"$line\")\n");
   }
   $lastIc = $ic;
 }
