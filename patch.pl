@@ -5,6 +5,8 @@ use warnings;
 
 my $file = $ARGV[0] or die("$0 <filename>");
 
+my $dev_no_linenumber = $ENV{'DEV_NO_LINENUMER'} or 0;
+
 open(my $fh, "<:encoding(utf8)", $file);
 chomp(my @lines = <$fh>);
 close($fh);
@@ -31,7 +33,7 @@ sub get_indent_count {
     return length($1);
   }
   elsif( $line =~ /^( +)/) {
-    return length($1);
+    return length($1) / $indent_count;
   }
   return 0;
 }
@@ -54,7 +56,6 @@ for (my $i = 0; $i < $line_cnt; $i++) {
   if ($line =~ /^\s*.+:/ and not $line =~ /".*:.*"/ and not $line =~ /:(\s*[a-zA-Z0-9]*)=/ and not $line =~ /var.*:/) {
     $ic++;
   }
-  my $in = $indent_type x $indent_count x $ic;
   # pre line when block has ended and new begin even on empty lines
   print("$line\n");
   if ($ic eq 0) {
@@ -68,7 +69,12 @@ for (my $i = 0; $i < $line_cnt; $i++) {
   }
   if ($ins eq 1) {
     my $t = $i + 1;
-    print("$in# NaiveGBScriptProfiler(\"$file\", $t, OS.get_ticks_msec(), \"$line\")\n");
+    if ($dev_no_linenumber) {
+      $t = -1;
+    }
+    my $indent = $indent_type x $indent_count x $ic;
+    chomp($line);
+    print($indent . "NaiveGBScriptProfiler.note('$file', $t, OS.get_ticks_msec(), '$indent$line')\n");
   }
   $lastIc = $ic;
 }
