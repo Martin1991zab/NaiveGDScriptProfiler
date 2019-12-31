@@ -52,10 +52,10 @@ for (my $i = 0; $i < $line_cnt; $i++) {
   }
   my $ic = get_indent_count($line);
   if ($line =~ /^\s*.+:/ and not $line =~ /".*:.*"/ and not $line =~ /:(\s*[a-zA-Z0-9]*)=/ and not $line =~ /var.*:/) {
-    # something:#ignore
     $ic++;
   }
   my $in = $indent_type x $indent_count x $ic;
+  # pre line when block has ended and new begin even on empty lines
   print("$line\n");
   if ($ic eq 0) {
     next
